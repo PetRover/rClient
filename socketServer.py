@@ -42,7 +42,7 @@ class Client(threading.Thread):
 
 
 class SocketServer(object):
-    def __init__(self, port):
+    def __init__(self, ip, port):
         print 'New server created on port {0}'.format(port)
         self.newConnectionsQueue = Queue.Queue()
 
@@ -50,14 +50,15 @@ class SocketServer(object):
         self.clientsThreads = {}
         self.clientQueues = {}
         self.port = port
+        self.ip = ip
         self.listenerThread = None
 
     @staticmethod
-    def listenForConnections_thread_(newConnectionQueue, port):
+    def listenForConnections_thread_(newConnectionQueue, ip, port):
         serverSoc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
             serverSoc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            serverSoc.bind(('localhost', port))
+            serverSoc.bind((ip, port))
             serverSoc.listen(5)
             while True:
                 newConnectionQueue.put(serverSoc.accept())
@@ -66,7 +67,8 @@ class SocketServer(object):
 
     def startListening(self):
         print 'Server is now listening...'
-        self.listenerThread = threading.Thread(target=self.listenForConnections_thread_, args=(self.newConnectionsQueue, self.port))
+        self.listenerThread = threading.Thread(target=self.listenForConnections_thread_, args=(self.newConnectionsQueue, self.ip, self.port))
+        self.listenerThread.daemon = True
         self.listenerThread.start()
 
     def checkForNewConnections(self):
@@ -79,6 +81,7 @@ class SocketServer(object):
                       'receiveQueue': Queue.Queue()}
             self.clientQueues[clientId] = queues
             client = Client(connection, addr, queues)
+            client.daemon = True
             self.clientsThreads[clientId] = client
             client.start()
 
@@ -87,16 +90,20 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--data', default=None)
+    parser.add_argument('-i', '--ip', default='localhost')
     parser.add_argument('-p', '--port', default=1024)
     args = parser.parse_args()
 
-    ss = SocketServer(args.port)
+    ss = SocketServer(args.ip, args.port)
     ss.startListening()
     while True:
         ss.checkForNewConnections()
         for queueDict in ss.clientQueues.values():
             if not queueDict['receiveQueue'].empty():
-                print 'Read: {0}'.format(queueDict['receiveQueue'].get())
+                d = queueDict['receiveQueue'].get()
+                with open('readData.file', 'a') as f:
+                    f.write(d)
+                print 'Read: {0}'.format(d)
             if args.data is not None:
                 print 'Sending: {0}'.format(args.data)
                 queueDict['sendQueue'].put(args.data)
