@@ -9,7 +9,7 @@ s.connect(('localhost', 1024))
 while 1:
     data = raw_input('enter data to send:')
     try:
-        d = str(unichr(int(data, 16)))
+        d = ''.join([str(unichr(int(val, 16))) for val in data.split(',')])
     except ValueError:
         d = data
     s.send(d)

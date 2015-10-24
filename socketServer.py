@@ -107,7 +107,7 @@ if __name__ == '__main__':
                 print 'Read: {0}'.format(d)
             if args.data is not None:
                 try:
-                    d = str(unichr(int(args.data, 16)))
+                    d = ''.join([str(unichr(int(val, 16))) for val in args.data.split(',')])
                 except ValueError:
                     d = args.data
                 print 'Sending: {0}'.format(d)
