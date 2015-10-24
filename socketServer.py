@@ -106,10 +106,14 @@ if __name__ == '__main__':
                     f.write(d)
                 print 'Read: {0}'.format(d)
             if args.data is not None:
-                try:
-                    d = ''.join([str(unichr(int(val, 16))) for val in args.data.split(',')])
-                except ValueError:
-                    d = args.data
-                print 'Sending: {0}'.format(d)
-                queueDict['sendQueue'].put(d)
+                dataList = args.data.split(',')
+                processedDataList = []
+                for d in dataList:
+                    try:
+                        processedDataList.append(str(unichr(int(d, 16))))
+                    except ValueError:
+                        processedDataList.append(d)
+                dataToSend = ''.join(processedDataList)
+                print 'Sending: {0}'.format(dataToSend)
+                queueDict['sendQueue'].put(dataToSend)
             time.sleep(2)
