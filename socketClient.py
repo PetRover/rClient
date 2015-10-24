@@ -8,4 +8,8 @@ s.connect(('localhost', 1024))
 
 while 1:
     data = raw_input('enter data to send:')
-    s.send(data)
+    try:
+        d = str(unichr(int(data, 16)))
+    except ValueError:
+        d = data
+    s.send(d)

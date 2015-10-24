@@ -8,7 +8,6 @@ import time
 
 
 class Client(threading.Thread):
-
     def __init__(self, connection, addr, queues):
         super(Client, self).__init__()
         self.address = addr
@@ -67,7 +66,8 @@ class SocketServer(object):
 
     def startListening(self):
         print 'Server is now listening...'
-        self.listenerThread = threading.Thread(target=self.listenForConnections_thread_, args=(self.newConnectionsQueue, self.ip, self.port))
+        self.listenerThread = threading.Thread(target=self.listenForConnections_thread_,
+                                               args=(self.newConnectionsQueue, self.ip, self.port))
         self.listenerThread.daemon = True
         self.listenerThread.start()
 
@@ -84,6 +84,7 @@ class SocketServer(object):
             client.daemon = True
             self.clientsThreads[clientId] = client
             client.start()
+
 
 if __name__ == '__main__':
     import argparse
@@ -105,6 +106,10 @@ if __name__ == '__main__':
                     f.write(d)
                 print 'Read: {0}'.format(d)
             if args.data is not None:
-                print 'Sending: {0}'.format(args.data)
-                queueDict['sendQueue'].put(args.data)
+                try:
+                    d = str(unichr(int(args.data, 16)))
+                except ValueError:
+                    d = args.data
+                print 'Sending: {0}'.format(d)
+                queueDict['sendQueue'].put(d)
             time.sleep(2)
